@@ -1,0 +1,1239 @@
+
+
+
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta Libras 3D — Código Visual</title>
+    <!-- Carregamento do Tailwind CSS para layout responsivo e moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fontes legíveis: Inter para interface e JetBrains Mono para blocos de código -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-blue: #2563a6;
+            --brand-light: #3186d5;
+            --bg-soft: #f5f8fc;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-soft);
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        code, pre, .font-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Acessibilidade: Destaque nítido ao navegar usando o teclado (Tab) */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 3px;
+        }
+
+        /* Modo Foco Visual (Alto Contraste e Bordas Reforçadas) */
+        body.focus-mode {
+            background-color: #ffffff;
+            color: #090d16;
+        }
+        body.focus-mode .concept-card,
+        body.focus-mode .lab-panel,
+        body.focus-mode .quiz-box {
+            border: 3px solid #1e3a8a !important;
+            box-shadow: 0 10px 0 #1e3a8a !important;
+        }
+        body.focus-mode .code-window {
+            border: 3px solid #38bdf8 !important;
+        }
+
+        /* Palco 3D do Hero */
+        .hero-stage {
+            perspective: 1000px;
+        }
+
+        .hero-orb {
+            background: linear-gradient(145deg, #60a5fa, #1d4ed8);
+            box-shadow: 0 25px 50px -12px rgba(37, 99, 166, 0.45),
+                        inset 0 4px 12px rgba(255, 255, 255, 0.5);
+            animation: pulseOrb 4.5s ease-in-out infinite;
+        }
+
+        .hero-hand-3d {
+            filter: drop-shadow(0 18px 16px rgba(15, 23, 42, 0.28));
+            animation: floatHand 3.6s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        .badge-float-1 {
+            animation: floatBadge 4s ease-in-out infinite;
+        }
+
+        .badge-float-2 {
+            animation: floatBadge 4.6s ease-in-out infinite reverse;
+        }
+
+        .badge-float-3 {
+            animation: floatBadge 3.8s ease-in-out 0.6s infinite;
+        }
+
+        @keyframes floatHand {
+            0%, 100% { transform: translateY(0px) rotateY(-12deg) rotateX(6deg); }
+            50% { transform: translateY(-14px) rotateY(14deg) rotateX(-4deg); }
+        }
+
+        @keyframes floatBadge {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-9px); }
+        }
+
+        @keyframes pulseOrb {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        /* Animações das Metáforas Visuais nos Cards */
+        @keyframes boxBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .anim-box { animation: boxBounce 2.2s ease-in-out infinite; }
+
+        @keyframes forkBlink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.92); }
+        }
+        .anim-fork-a { animation: forkBlink 2s infinite; }
+        .anim-fork-b { animation: forkBlink 2s 1s infinite; }
+
+        @keyframes spinGear {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .anim-spin { animation: spinGear 5s linear infinite; }
+
+        @keyframes bugWiggle {
+            0%, 100% { transform: rotate(-10deg) translateX(0); }
+            50% { transform: rotate(12deg) translateX(6px); }
+        }
+        .anim-bug { animation: bugWiggle 1.4s ease-in-out infinite; }
+
+        /* Destaque da linha ativa no simulador de código */
+        .code-line {
+            transition: all 0.25s ease;
+            border-left: 4px solid transparent;
+        }
+        .code-line.active-line {
+            background-color: rgba(56, 189, 248, 0.22);
+            border-left-color: #38bdf8;
+            transform: translateX(4px);
+        }
+
+        /* Animação de entrada de item na esteira (Loop) */
+        @keyframes popItem {
+            0% { transform: scale(0.3) translateY(15px); opacity: 0; }
+            70% { transform: scale(1.15) translateY(-3px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .item-spawn {
+            animation: popItem 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Respeito integral à preferência de movimento reduzido */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- ==================== CABEÇALHO ==================== -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Logo -->
+            <a href="#inicio" class="flex items-center gap-2.5 text-xl sm:text-2xl font-extrabold text-[#2563a6] tracking-tight">
+                <span class="text-2xl sm:text-3xl" aria-hidden="true">🤟</span>
+                <span>Conecta Libras <span class="text-[#3186d5]">3D</span></span>
+            </a>
+
+            <!-- Navegação Direta -->
+            <nav aria-label="Navegação principal" class="flex items-center gap-2 sm:gap-5 text-sm sm:text-base font-bold text-slate-700">
+                <a href="#ingles-visual" class="px-2.5 py-2 rounded-lg hover:bg-blue-50 hover:text-[#2563a6] transition">Inglês Visual</a>
+                <a href="#laboratorio" class="px-2.5 py-2 rounded-lg hover:bg-blue-50 hover:text-[#2563a6] transition">Laboratório</a>
+                <a href="#desafio" class="px-2.5 py-2 rounded-lg hover:bg-blue-50 hover:text-[#2563a6] transition">Desafio</a>
+            </nav>
+
+            <!-- Botão de Acessibilidade Visual -->
+            <button
+                id="btn-focus-mode"
+                type="button"
+                onclick="toggleFocusMode()"
+                aria-pressed="false"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-800 border-2 border-slate-300 hover:border-[#2563a6] hover:bg-blue-50 transition cursor-pointer"
+                title="Ativar alto contraste e bordas reforçadas"
+            >
+                <span aria-hidden="true">👁️</span>
+                <span id="focus-label">Foco Visual</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== HERO SECTION ==================== -->
+    <section id="inicio" class="bg-gradient-to-br from-[#e1efff] via-[#eef6ff] to-[#f5f8fc] border-b border-blue-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 flex flex-col lg:flex-row items-center justify-between gap-10">
+            <!-- Texto Curto e Direto (Zero Textão) -->
+            <div class="max-w-xl text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 text-[#1d4ed8] text-xs font-extrabold tracking-wider uppercase mb-5">
+                    <span aria-hidden="true">⚡</span> Programação Visual &amp; Libras
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-[1.12] tracking-tight mb-5">
+                    Código se aprende <span class="text-[#2563a6]">vendo</span>, não decorando.
+                </h1>
+
+                <p class="text-lg sm:text-xl text-slate-600 font-medium mb-8 leading-relaxed">
+                    Sem textão. Entenda as palavras em inglês da programação com animações, lógica espacial de Libras e prática imediata.
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                    <a href="#ingles-visual" class="px-6 py-4 rounded-2xl bg-[#2563a6] hover:bg-[#1b4d85] text-white font-bold text-base sm:text-lg shadow-lg shadow-blue-600/25 transition transform hover:-translate-y-0.5">
+                        Ver Palavras em Inglês →
+                    </a>
+                    <a href="#laboratorio" class="px-6 py-4 rounded-2xl bg-white hover:bg-blue-50 text-[#2563a6] border-2 border-blue-200 font-bold text-base sm:text-lg transition">
+                        Testar ao Vivo ⚡
+                    </a>
+                </div>
+            </div>
+
+            <!-- Visual 3D Flutuante -->
+            <div class="hero-stage relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center shrink-0" aria-hidden="true">
+                <div class="hero-orb w-56 h-56 sm:w-64 sm:h-64 rounded-full"></div>
+                <div class="hero-hand-3d relative text-[110px] sm:text-[130px] select-none">🤟</div>
+
+                <!-- Tags Flutuantes de Código -->
+                <div class="badge-float-1 absolute top-3 left-0 bg-amber-400 text-slate-950 font-code font-extrabold text-sm px-3.5 py-2 rounded-xl shadow-lg border-2 border-white">
+                    if (✨)
+                </div>
+                <div class="badge-float-2 absolute bottom-4 right-0 bg-emerald-500 text-white font-code font-extrabold text-sm px-3.5 py-2 rounded-xl shadow-lg border-2 border-white">
+                    for (🔁)
+                </div>
+                <div class="badge-float-3 absolute top-8 right-2 bg-purple-600 text-white font-code font-extrabold text-sm px-3 py-1.5 rounded-xl shadow-lg border-2 border-white">
+                    [0, 1]
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <!-- ==================== SEÇÃO 1: INGLÊS DESCOMPLICADO NO CÓDIGO ==================== -->
+        <section id="ingles-visual" class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+            <div class="text-center max-w-2xl mx-auto mb-10">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-[#2563a6]">Ponte Inglês → Visual → Libras</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
+                    Inglês Descomplicado no Código
+                </h2>
+                <p class="text-slate-600 text-base sm:text-lg">
+                    O computador usa inglês, mas a lógica é 100% visual. Toque para filtrar ou testar.
+                </p>
+            </div>
+
+            <!-- Filtros Semânticos por Cor -->
+            <div role="tablist" aria-label="Filtrar conceitos de programação" class="flex flex-wrap justify-center gap-2.5 mb-10">
+                <button type="button" onclick="filtrarConceitos('todos')" data-filter="todos" class="filter-btn active-filter px-4 py-2.5 rounded-xl font-bold text-sm bg-[#2563a6] text-white shadow-sm cursor-pointer transition">
+                    Todos (6)
+                </button>
+                <button type="button" onclick="filtrarConceitos('dados')" data-filter="dados" class="filter-btn px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-purple-700 border-2 border-purple-200 hover:bg-purple-50 cursor-pointer transition">
+                    🟣 Dados
+                </button>
+                <button type="button" onclick="filtrarConceitos('decisao')" data-filter="decisao" class="filter-btn px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-amber-700 border-2 border-amber-200 hover:bg-amber-50 cursor-pointer transition">
+                    🟠 Decisão
+                </button>
+                <button type="button" onclick="filtrarConceitos('repeticao')" data-filter="repeticao" class="filter-btn px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-700 border-2 border-emerald-200 hover:bg-emerald-50 cursor-pointer transition">
+                    🟢 Repetição
+                </button>
+                <button type="button" onclick="filtrarConceitos('acao')" data-filter="acao" class="filter-btn px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-blue-700 border-2 border-blue-200 hover:bg-blue-50 cursor-pointer transition">
+                    🔵 Ação
+                </button>
+                <button type="button" onclick="filtrarConceitos('erro')" data-filter="erro" class="filter-btn px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-rose-700 border-2 border-rose-200 hover:bg-rose-50 cursor-pointer transition">
+                    🔴 Erro
+                </button>
+            </div>
+
+            <!-- Grade de Cards Visuais -->
+            <div id="grid-conceitos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Card 1: var / const -->
+                <article data-category="dados" class="concept-card bg-white rounded-3xl p-6 border-2 border-purple-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-purple-100 text-purple-800">
+                                var / const
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">
+                                Variável
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-purple-50/80 rounded-2xl p-4 mb-4 flex items-center justify-center gap-4 border border-purple-100">
+                            <div class="anim-box text-4xl" aria-hidden="true">📦</div>
+                            <div class="text-left">
+                                <div class="text-xs font-bold text-purple-700 uppercase">Caixa com Etiqueta</div>
+                                <div class="font-code text-sm font-bold text-slate-800">nome = "Ana"</div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Guarda um valor na memória</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-purple-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-purple-800">🤟 Pense em Libras:</span>
+                            Marque um ponto no espaço à sua frente e aponte para ele sempre que usar esse dado.
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="irParaSimulador('array')" class="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition cursor-pointer">
+                        Ver na Prática →
+                    </button>
+                </article>
+
+                <!-- Card 2: if / else -->
+                <article data-category="decisao" class="concept-card bg-white rounded-3xl p-6 border-2 border-amber-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-amber-100 text-amber-900">
+                                if / else
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg">
+                                Se / Senão
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-amber-50/80 rounded-2xl p-4 mb-4 flex items-center justify-around border border-amber-100">
+                            <div class="anim-fork-a text-center">
+                                <div class="text-2xl" aria-hidden="true">☀️</div>
+                                <div class="font-code text-xs font-bold text-amber-800">if (Sim)</div>
+                            </div>
+                            <div class="text-xl font-extrabold text-amber-400" aria-hidden="true">⑂</div>
+                            <div class="anim-fork-b text-center">
+                                <div class="text-2xl" aria-hidden="true">🌧️</div>
+                                <div class="font-code text-xs font-bold text-slate-700">else (Não)</div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Escolha de caminho</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-amber-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-amber-800">🤟 Pense em Libras:</span>
+                            Expressão facial de dúvida (sobrancelhas) + corpo vira para um lado (<code class="font-bold">if</code>) ou outro (<code class="font-bold">else</code>).
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="irParaSimulador('if')" class="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm transition cursor-pointer">
+                        Testar IF / ELSE ao vivo →
+                    </button>
+                </article>
+
+                <!-- Card 3: for / while -->
+                <article data-category="repeticao" class="concept-card bg-white rounded-3xl p-6 border-2 border-emerald-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900">
+                                for / while
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                                Loop (Repetir)
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-emerald-50/80 rounded-2xl p-4 mb-4 flex items-center justify-center gap-4 border border-emerald-100">
+                            <div class="anim-spin text-4xl" aria-hidden="true">🔄</div>
+                            <div class="text-left">
+                                <div class="text-xs font-bold text-emerald-700 uppercase">Esteira Automática</div>
+                                <div class="font-code text-sm font-bold text-slate-800">repetir 5x ⚡</div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Faz várias vezes sem cansar</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-emerald-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-emerald-800">🤟 Pense em Libras:</span>
+                            Movimento circular contínuo com a mão indicando repetição até bater o limite.
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="irParaSimulador('loop')" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition cursor-pointer">
+                        Testar LOOP ao vivo →
+                    </button>
+                </article>
+
+                <!-- Card 4: function -->
+                <article data-category="acao" class="concept-card bg-white rounded-3xl p-6 border-2 border-blue-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-blue-100 text-blue-900">
+                                function
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg">
+                                Função (Ação)
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-blue-50/80 rounded-2xl p-4 mb-4 flex items-center justify-center gap-3 border border-blue-100">
+                            <span class="text-2xl" aria-hidden="true">🍊</span>
+                            <span class="font-bold text-blue-500">→</span>
+                            <div class="anim-box text-3xl" aria-hidden="true">⚙️</div>
+                            <span class="font-bold text-blue-500">→</span>
+                            <span class="text-2xl" aria-hidden="true">🧃</span>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Máquina pronta para usar</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-blue-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-blue-800">🤟 Pense em Libras:</span>
+                            É um verbo de ação agrupado: entra ingrediente, sai resultado pronto.
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="irParaSimulador('if')" class="w-full py-3 px-4 rounded-xl bg-[#2563a6] hover:bg-[#1b4d85] text-white font-bold text-sm transition cursor-pointer">
+                        Ver Ação no Laboratório →
+                    </button>
+                </article>
+
+                <!-- Card 5: array [ ] -->
+                <article data-category="dados" class="concept-card bg-white rounded-3xl p-6 border-2 border-cyan-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-cyan-100 text-cyan-900">
+                                array [ ]
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-lg">
+                                Lista Numerada
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-cyan-50/80 rounded-2xl p-3.5 mb-4 flex items-center justify-center gap-2 border border-cyan-100">
+                            <div class="bg-white border-2 border-cyan-300 rounded-lg px-2.5 py-1 text-center">
+                                <div class="text-[10px] font-code font-bold text-cyan-700">[0]</div>
+                                <div class="text-lg">🤟</div>
+                            </div>
+                            <div class="bg-white border-2 border-cyan-300 rounded-lg px-2.5 py-1 text-center">
+                                <div class="text-[10px] font-code font-bold text-cyan-700">[1]</div>
+                                <div class="text-lg">💻</div>
+                            </div>
+                            <div class="bg-white border-2 border-cyan-300 rounded-lg px-2.5 py-1 text-center">
+                                <div class="text-[10px] font-code font-bold text-cyan-700">[2]</div>
+                                <div class="text-lg">🚀</div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Armário que começa no zero</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-cyan-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-cyan-800">🤟 Pense em Libras:</span>
+                            Use os dedos da mão em sequência: polegar é gaveta <code class="font-bold">[0]</code>, indicador é <code class="font-bold">[1]</code>...
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="irParaSimulador('array')" class="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm transition cursor-pointer">
+                        Abrir Armário [ ] ao vivo →
+                    </button>
+                </article>
+
+                <!-- Card 6: bug -->
+                <article data-category="erro" class="concept-card bg-white rounded-3xl p-6 border-2 border-rose-100 shadow-md hover:shadow-xl transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="font-code font-extrabold text-lg px-3 py-1 rounded-xl bg-rose-100 text-rose-900">
+                                bug / debug
+                            </span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg">
+                                Erro / Conserto
+                            </span>
+                        </div>
+
+                        <!-- Metáfora Visual Animada -->
+                        <div class="bg-rose-50/80 rounded-2xl p-4 mb-4 flex items-center justify-center gap-4 border border-rose-100">
+                            <div class="anim-bug text-4xl" aria-hidden="true">🐛</div>
+                            <div class="text-left">
+                                <div class="text-xs font-bold text-rose-700 uppercase">Inseto no Código</div>
+                                <div class="font-code text-sm font-bold text-slate-800">debug = 🔍 limpar</div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Todo programador encontra</h3>
+
+                        <!-- Dica Espacial em Libras -->
+                        <div class="bg-slate-50 rounded-xl p-3 border-l-4 border-rose-500 text-sm text-slate-700 mb-5">
+                            <span class="font-extrabold text-rose-800">🤟 Pense em Libras:</span>
+                            Sinal de investigar/procurar linha por linha até achar o detalhe errado.
+                        </div>
+                    </div>
+
+                    <a href="#desafio" class="block text-center w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition">
+                        Caçar Bugs no Desafio →
+                    </a>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO 2: LABORATÓRIO VISUAL INTERATIVO ==================== -->
+        <section id="laboratorio" class="bg-[#eaf3fc] border-y border-blue-200/70 py-16 sm:py-20">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <span class="text-xs font-extrabold uppercase tracking-widest text-[#2563a6]">Mão na Massa Sem Preguiça</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
+                        Laboratório Visual ao Vivo
+                    </h2>
+                    <p class="text-slate-600 text-base sm:text-lg">
+                        Clique nos botões e veja a linha exata do código em inglês acender junto com a animação.
+                    </p>
+                </div>
+
+                <!-- Abas dos 3 Simuladores -->
+                <div role="tablist" aria-label="Escolha o simulador" class="flex flex-wrap justify-center gap-3 mb-8">
+                    <button
+                        id="tab-sim-if"
+                        type="button"
+                        role="tab"
+                        aria-selected="true"
+                        onclick="mudarSimulador('if')"
+                        class="sim-tab px-5 py-3.5 rounded-2xl font-extrabold text-sm sm:text-base bg-[#2563a6] text-white shadow-md cursor-pointer transition"
+                    >
+                        1. Decisão (if / else)
+                    </button>
+                    <button
+                        id="tab-sim-loop"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        onclick="mudarSimulador('loop')"
+                        class="sim-tab px-5 py-3.5 rounded-2xl font-extrabold text-sm sm:text-base bg-white text-slate-700 border-2 border-blue-200 hover:bg-blue-50 cursor-pointer transition"
+                    >
+                        2. Repetição (for loop)
+                    </button>
+                    <button
+                        id="tab-sim-array"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        onclick="mudarSimulador('array')"
+                        class="sim-tab px-5 py-3.5 rounded-2xl font-extrabold text-sm sm:text-base bg-white text-slate-700 border-2 border-blue-200 hover:bg-blue-50 cursor-pointer transition"
+                    >
+                        3. Armário (array [ ])
+                    </button>
+                </div>
+
+                <!-- ========== SIMULADOR 1: IF / ELSE ========== -->
+                <div id="sim-panel-if" class="lab-panel bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-100">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <!-- Lado Esquerdo: Controles e Cenário Visual -->
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-amber-700 mb-2">
+                                Passo 1: Escolha o clima lá fora
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mb-6">
+                                <button type="button" onclick="simularClima('sol')" id="btn-clima-sol" class="clima-btn py-3.5 px-3 rounded-2xl border-2 border-amber-400 bg-amber-50 font-extrabold text-slate-900 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="text-3xl">☀️</span>
+                                    <span class="text-sm">Sol</span>
+                                </button>
+                                <button type="button" onclick="simularClima('chuva')" id="btn-clima-chuva" class="clima-btn py-3.5 px-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 font-extrabold text-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="text-3xl">🌧️</span>
+                                    <span class="text-sm">Chuva</span>
+                                </button>
+                                <button type="button" onclick="simularClima('frio')" id="btn-clima-frio" class="clima-btn py-3.5 px-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 font-extrabold text-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="text-3xl">❄️</span>
+                                    <span class="text-sm">Frio</span>
+                                </button>
+                            </div>
+
+                            <!-- Palco Visual do Avatar -->
+                            <div id="clima-cenario" class="rounded-2xl p-6 bg-gradient-to-r from-amber-100 to-yellow-50 border-2 border-amber-200 flex items-center justify-between gap-4 transition-all">
+                                <div class="flex items-center gap-4">
+                                    <div id="clima-avatar" class="text-6xl select-none">😎</div>
+                                    <div>
+                                        <div class="text-xs font-extrabold uppercase text-amber-800">Resultado Visual</div>
+                                        <div id="clima-acao-texto" class="text-xl font-extrabold text-slate-900">Usar Óculos de Sol!</div>
+                                    </div>
+                                </div>
+                                <div id="clima-item-extra" class="text-4xl">🕶️</div>
+                            </div>
+                        </div>
+
+                        <!-- Lado Direito: Código em Inglês Reagindo ao Vivo -->
+                        <div class="code-window bg-slate-900 text-slate-100 rounded-2xl p-5 sm:p-6 shadow-inner overflow-x-auto">
+                            <div class="flex items-center justify-between text-xs text-slate-400 mb-3 pb-2 border-b border-slate-800">
+                                <span class="font-code font-bold text-sky-400">decisao.js</span>
+                                <span>Linha acesa = Caminho escolhido</span>
+                            </div>
+                            <pre class="font-code text-sm sm:text-base leading-relaxed"><code><div class="px-2 py-1 text-slate-300"><span class="text-purple-400">let</span> clima = <span id="code-clima-val" class="text-amber-300 font-bold">"sol"</span>;</div>
+<div id="line-if-sol" class="code-line active-line px-2 py-1.5 rounded-r-lg"><span class="text-amber-400 font-bold">if</span> (clima === <span class="text-amber-300">"sol"</span>) {
+  avatar = <span class="text-emerald-300">"😎 Óculos"</span>;
+}</div>
+<div id="line-if-chuva" class="code-line px-2 py-1.5 rounded-r-lg"><span class="text-amber-400 font-bold">else if</span> (clima === <span class="text-amber-300">"chuva"</span>) {
+  avatar = <span class="text-emerald-300">"☂️ Guarda-chuva"</span>;
+}</div>
+<div id="line-if-else" class="code-line px-2 py-1.5 rounded-r-lg"><span class="text-amber-400 font-bold">else</span> {
+  avatar = <span class="text-emerald-300">"🧥 Casaco"</span>;
+}</div></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== SIMULADOR 2: LOOP (FOR) ========== -->
+                <div id="sim-panel-loop" class="lab-panel hidden bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-100">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <!-- Lado Esquerdo: Controle de Repetição e Esteira -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="loop-range" class="text-sm font-extrabold text-slate-800">
+                                    Quantas vezes repetir?
+                                </label>
+                                <span id="loop-count-badge" class="font-code font-extrabold text-lg px-3 py-0.5 rounded-lg bg-emerald-100 text-emerald-800">
+                                    4x
+                                </span>
+                            </div>
+
+                            <input
+                                id="loop-range"
+                                type="range"
+                                min="1"
+                                max="6"
+                                value="4"
+                                oninput="atualizarSliderLoop(this.value)"
+                                class="w-full h-3 bg-emerald-100 rounded-lg appearance-none cursor-pointer accent-emerald-600 mb-5"
+                            >
+
+                            <button
+                                id="btn-run-loop"
+                                type="button"
+                                onclick="executarLoopVisual()"
+                                class="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-md cursor-pointer transition mb-6 flex items-center justify-center gap-2"
+                            >
+                                <span>▶ Executar Loop (for)</span>
+                            </button>
+
+                            <!-- Esteira Visual -->
+                            <div class="bg-slate-100 rounded-2xl p-4 border-2 border-dashed border-emerald-300 min-h-[116px]">
+                                <div class="flex items-center justify-between text-xs font-extrabold text-slate-500 uppercase mb-2">
+                                    <span>🤖 Esteira de Produção</span>
+                                    <span id="loop-status-label" class="text-emerald-700">Pronta</span>
+                                </div>
+                                <div id="esteira-itens" class="flex flex-wrap items-center gap-3 min-h-[56px]">
+                                    <div class="bg-white border border-emerald-200 rounded-xl px-3 py-2 text-center shadow-sm">
+                                        <div class="text-2xl">🚀</div>
+                                        <div class="font-code text-[11px] font-bold text-slate-500">i=0</div>
+                                    </div>
+                                    <div class="bg-white border border-emerald-200 rounded-xl px-3 py-2 text-center shadow-sm">
+                                        <div class="text-2xl">🚀</div>
+                                        <div class="font-code text-[11px] font-bold text-slate-500">i=1</div>
+                                    </div>
+                                    <div class="bg-white border border-emerald-200 rounded-xl px-3 py-2 text-center shadow-sm">
+                                        <div class="text-2xl">🚀</div>
+                                        <div class="font-code text-[11px] font-bold text-slate-500">i=2</div>
+                                    </div>
+                                    <div class="bg-white border border-emerald-200 rounded-xl px-3 py-2 text-center shadow-sm">
+                                        <div class="text-2xl">🚀</div>
+                                        <div class="font-code text-[11px] font-bold text-slate-500">i=3</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lado Direito: Código do Loop -->
+                        <div class="code-window bg-slate-900 text-slate-100 rounded-2xl p-5 sm:p-6 shadow-inner overflow-x-auto">
+                            <div class="flex items-center justify-between text-xs text-slate-400 mb-3 pb-2 border-b border-slate-800">
+                                <span class="font-code font-bold text-emerald-400">esteira.js</span>
+                                <span id="code-loop-counter" class="font-code text-amber-300 font-bold">Contador i = 0</span>
+                            </div>
+                            <pre class="font-code text-sm sm:text-base leading-relaxed"><code><div class="px-2 py-1 text-slate-300"><span class="text-purple-400">const</span> total = <span id="code-loop-total" class="text-emerald-300 font-bold">4</span>;</div>
+<div id="line-for-header" class="code-line active-line px-2 py-1.5 rounded-r-lg"><span class="text-emerald-400 font-bold">for</span> (<span class="text-purple-400">let</span> i = 0; i &lt; total; i++) {
+  criarFoguete(<span class="text-amber-300">"🚀"</span>);
+}</div>
+<div class="px-2 py-1 text-slate-400 text-xs mt-2">// i++ significa: soma +1 a cada volta</div></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== SIMULADOR 3: ARRAY [ ] ========== -->
+                <div id="sim-panel-array" class="lab-panel hidden bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-100">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <!-- Lado Esquerdo: Armário Interativo -->
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-cyan-700 mb-2">
+                                Toque em uma gaveta para abrir (índice começa em 0)
+                            </div>
+
+                            <!-- 4 Gavetas Numeradas -->
+                            <div class="grid grid-cols-4 gap-3 mb-5">
+                                <button type="button" onclick="selecionarGaveta(0)" id="gaveta-0" class="gaveta-btn p-3 rounded-2xl border-2 border-cyan-500 bg-cyan-50 flex flex-col items-center gap-1 cursor-pointer transition shadow-sm">
+                                    <span class="font-code text-xs font-extrabold text-cyan-800">[0]</span>
+                                    <span id="gaveta-item-0" class="text-3xl sm:text-4xl">🤟</span>
+                                </button>
+                                <button type="button" onclick="selecionarGaveta(1)" id="gaveta-1" class="gaveta-btn p-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="font-code text-xs font-extrabold text-slate-500">[1]</span>
+                                    <span id="gaveta-item-1" class="text-3xl sm:text-4xl">💻</span>
+                                </button>
+                                <button type="button" onclick="selecionarGaveta(2)" id="gaveta-2" class="gaveta-btn p-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="font-code text-xs font-extrabold text-slate-500">[2]</span>
+                                    <span id="gaveta-item-2" class="text-3xl sm:text-4xl">🚀</span>
+                                </button>
+                                <button type="button" onclick="selecionarGaveta(3)" id="gaveta-3" class="gaveta-btn p-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center gap-1 cursor-pointer transition">
+                                    <span class="font-code text-xs font-extrabold text-slate-500">[3]</span>
+                                    <span id="gaveta-item-3" class="text-3xl sm:text-4xl">⚡</span>
+                                </button>
+                            </div>
+
+                            <!-- Trocar item da gaveta selecionada -->
+                            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                                <div class="text-xs font-extrabold text-slate-600 uppercase mb-2.5">
+                                    Trocar item da gaveta <span id="label-gaveta-ativa" class="font-code text-cyan-700">[0]</span>:
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" onclick="trocarItemGaveta('🤟')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">🤟</button>
+                                    <button type="button" onclick="trocarItemGaveta('💻')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">💻</button>
+                                    <button type="button" onclick="trocarItemGaveta('🚀')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">🚀</button>
+                                    <button type="button" onclick="trocarItemGaveta('⚡')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">⚡</button>
+                                    <button type="button" onclick="trocarItemGaveta('🎮')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">🎮</button>
+                                    <button type="button" onclick="trocarItemGaveta('🎨')" class="text-2xl p-2 bg-white rounded-xl border border-slate-200 hover:border-cyan-500 cursor-pointer">🎨</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lado Direito: Código do Array -->
+                        <div class="code-window bg-slate-900 text-slate-100 rounded-2xl p-5 sm:p-6 shadow-inner overflow-x-auto">
+                            <div class="flex items-center justify-between text-xs text-slate-400 mb-3 pb-2 border-b border-slate-800">
+                                <span class="font-code font-bold text-cyan-400">mochila.js</span>
+                                <span>Posição 0 = Primeira gaveta</span>
+                            </div>
+                            <pre class="font-code text-sm sm:text-base leading-relaxed"><code><div class="px-2 py-1 text-slate-300"><span class="text-purple-400">const</span> mochila = <span id="code-array-list" class="text-amber-300">["🤟", "💻", "🚀", "⚡"]</span>;</div>
+<div class="code-line active-line px-2 py-2 mt-2 rounded-r-lg">mochila[<span id="code-array-index" class="text-cyan-300 font-extrabold">0</span>]  <span class="text-slate-400">// Mostra:</span> <span id="code-array-result" class="text-2xl align-middle">🤟</span></div></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO 3: DESAFIO RELÂMPAGO (QUIZ VISUAL) ==================== -->
+        <section id="desafio" class="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+            <div class="text-center mb-10">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-[#2563a6]">Prática Gamificada</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-2">
+                    Desafio Relâmpago ⚡
+                </h2>
+                <p class="text-slate-600 text-base sm:text-lg">
+                    5 perguntas visuais rápidas. Sem pegadinhas longas.
+                </p>
+            </div>
+
+            <div id="quiz-container" class="quiz-box bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200">
+                <!-- Barra Superior de Progresso e Pontos -->
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <span id="quiz-step-label" class="text-sm font-extrabold text-[#2563a6]">
+                        Pergunta 1 de 5
+                    </span>
+                    <span id="quiz-score-badge" class="px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-extrabold">
+                        Pontos: 0
+                    </span>
+                </div>
+
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-8">
+                    <div id="quiz-progress-bar" class="h-full bg-[#2563a6] transition-all duration-300" style="width: 20%"></div>
+                </div>
+
+                <!-- Área da Pergunta Ativa -->
+                <div id="quiz-active-view">
+                    <h3 id="quiz-question" class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-4">
+                        Qual é a língua de sinais usada pela comunidade surda no Brasil?
+                    </h3>
+
+                    <!-- Bloco de Código Opcional da Questão -->
+                    <div id="quiz-code-snippet" class="hidden bg-slate-900 text-slate-100 font-code text-sm sm:text-base p-4 rounded-2xl mb-6 overflow-x-auto"></div>
+
+                    <!-- Botões de Alternativas -->
+                    <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5"></div>
+
+                    <!-- Feedback Visual Imediato (Substitui alert()) -->
+                    <div id="quiz-feedback" class="hidden mt-6 p-4 rounded-2xl border-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span id="quiz-feedback-icon" class="text-3xl"></span>
+                            <p id="quiz-feedback-text" class="font-bold text-sm sm:text-base"></p>
+                        </div>
+                        <button
+                            id="quiz-next-btn"
+                            type="button"
+                            onclick="proximaPergunta()"
+                            class="px-5 py-2.5 rounded-xl bg-[#2563a6] hover:bg-[#1b4d85] text-white font-extrabold text-sm shrink-0 cursor-pointer transition"
+                        >
+                            Próxima →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tela Final de Resultado -->
+                <div id="quiz-result-view" class="hidden text-center py-6">
+                    <div id="quiz-final-emoji" class="text-6xl mb-4">🏆</div>
+                    <h3 id="quiz-final-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+                        Mandou bem demais!
+                    </h3>
+                    <p id="quiz-final-summary" class="text-lg text-slate-600 font-medium mb-8">
+                        Você acertou 5 de 5 desafios visuais.
+                    </p>
+                    <button
+                        type="button"
+                        onclick="reiniciarQuiz()"
+                        class="px-7 py-4 rounded-2xl bg-[#2563a6] hover:bg-[#1b4d85] text-white font-extrabold text-base shadow-lg cursor-pointer transition"
+                    >
+                        🔄 Jogar Novamente
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== RODAPÉ ==================== -->
+    <footer class="bg-[#1e4f7a] text-white py-12 px-4 sm:px-6 text-center">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-2xl font-extrabold mb-2">🤟 Conecta Libras 3D — Código Visual</div>
+            <p class="text-blue-100 text-sm sm:text-base mb-4">
+                Tecnologia acessível, visual e inclusiva para todas as pessoas.
+            </p>
+            <p class="text-xs text-blue-200/80">
+                © 2026 Projeto Educativo • Compatível com tradução 3D VLibras
+            </p>
+        </div>
+    </footer>
+
+    <!-- ==================== WIDGET OFICIAL VLIBRAS (TRADUTOR 3D) ==================== -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+        // Inicialização segura do avatar 3D do VLibras
+        try {
+            if (window.VLibras) {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+        } catch (erroVLibras) {
+            console.warn('Aviso ao carregar VLibras:', erroVLibras);
+        }
+    </script>
+
+    <!-- ==================== LÓGICA INTERATIVA DA APLICAÇÃO ==================== -->
+    <script>
+        /* -----------------------------------------------------------
+           1. MODO FOCO VISUAL (ALTO CONTRASTE E DESTAQUE)
+        ----------------------------------------------------------- */
+        function toggleFocusMode() {
+            const body = document.body;
+            const btn = document.getElementById('btn-focus-mode');
+            const label = document.getElementById('focus-label');
+            const isFocused = body.classList.toggle('focus-mode');
+
+            btn.setAttribute('aria-pressed', String(isFocused));
+            if (isFocused) {
+                btn.classList.remove('bg-slate-100', 'text-slate-800');
+                btn.classList.add('bg-amber-400', 'text-slate-950', 'border-slate-950');
+                label.textContent = 'Foco Ativo';
+            } else {
+                btn.classList.add('bg-slate-100', 'text-slate-800');
+                btn.classList.remove('bg-amber-400', 'text-slate-950', 'border-slate-950');
+                label.textContent = 'Foco Visual';
+            }
+        }
+
+        /* -----------------------------------------------------------
+           2. FILTROS DA SEÇÃO "INGLÊS DESCOMPLICADO"
+        ----------------------------------------------------------- */
+        function filtrarConceitos(categoria) {
+            const cards = document.querySelectorAll('#grid-conceitos .concept-card');
+            const botoes = document.querySelectorAll('.filter-btn');
+
+            botoes.forEach(btn => {
+                const ativo = btn.getAttribute('data-filter') === categoria;
+                if (ativo) {
+                    btn.classList.add('bg-[#2563a6]', 'text-white', 'shadow-sm');
+                    btn.classList.remove('bg-white');
+                } else {
+                    btn.classList.remove('bg-[#2563a6]', 'text-white', 'shadow-sm');
+                    btn.classList.add('bg-white');
+                }
+            });
+
+            cards.forEach(card => {
+                const catCard = card.getAttribute('data-category');
+                if (categoria === 'todos' || catCard === categoria) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        /* -----------------------------------------------------------
+           3. NAVEGAÇÃO ENTRE OS SIMULADORES DO LABORATÓRIO
+        ----------------------------------------------------------- */
+        function mudarSimulador(tipo) {
+            const tipos = ['if', 'loop', 'array'];
+            tipos.forEach(t => {
+                const panel = document.getElementById('sim-panel-' + t);
+                const tab = document.getElementById('tab-sim-' + t);
+                const ativo = t === tipo;
+
+                if (panel) panel.classList.toggle('hidden', !ativo);
+                if (tab) {
+                    tab.setAttribute('aria-selected', String(ativo));
+                    if (ativo) {
+                        tab.classList.add('bg-[#2563a6]', 'text-white', 'shadow-md');
+                        tab.classList.remove('bg-white', 'text-slate-700', 'border-2', 'border-blue-200');
+                    } else {
+                        tab.classList.remove('bg-[#2563a6]', 'text-white', 'shadow-md');
+                        tab.classList.add('bg-white', 'text-slate-700', 'border-2', 'border-blue-200');
+                    }
+                }
+            });
+        }
+
+        function irParaSimulador(tipo) {
+            mudarSimulador(tipo);
+            const secaoLab = document.getElementById('laboratorio');
+            if (secaoLab) {
+                secaoLab.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        /* -----------------------------------------------------------
+           4. SIMULADOR 1: IF / ELSE (CLIMA)
+        ----------------------------------------------------------- */
+        function simularClima(clima) {
+            const cenario = document.getElementById('clima-cenario');
+            const avatar = document.getElementById('clima-avatar');
+            const texto = document.getElementById('clima-acao-texto');
+            const extra = document.getElementById('clima-item-extra');
+            const codeVal = document.getElementById('code-clima-val');
+
+            // Resetar destaque das linhas de código
+            ['line-if-sol', 'line-if-chuva', 'line-if-else'].forEach(id => {
+                document.getElementById(id).classList.remove('active-line');
+            });
+
+            // Resetar estilo dos botões de clima
+            ['sol', 'chuva', 'frio'].forEach(c => {
+                const b = document.getElementById('btn-clima-' + c);
+                b.className = 'clima-btn py-3.5 px-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 font-extrabold text-slate-700 flex flex-col items-center gap-1 cursor-pointer transition';
+            });
+
+            const btnAtivo = document.getElementById('btn-clima-' + clima);
+
+            if (clima === 'sol') {
+                codeVal.textContent = '"sol"';
+                document.getElementById('line-if-sol').classList.add('active-line');
+                cenario.className = 'rounded-2xl p-6 bg-gradient-to-r from-amber-100 to-yellow-50 border-2 border-amber-300 flex items-center justify-between gap-4 transition-all';
+                avatar.textContent = '😎';
+                texto.textContent = 'Usar Óculos de Sol!';
+                extra.textContent = '🕶️';
+                btnAtivo.className = 'clima-btn py-3.5 px-3 rounded-2xl border-2 border-amber-500 bg-amber-50 font-extrabold text-slate-900 flex flex-col items-center gap-1 cursor-pointer transition';
+            } else if (clima === 'chuva') {
+                codeVal.textContent = '"chuva"';
+                document.getElementById('line-if-chuva').classList.add('active-line');
+                cenario.className = 'rounded-2xl p-6 bg-gradient-to-r from-sky-100 to-blue-50 border-2 border-sky-300 flex items-center justify-between gap-4 transition-all';
+                avatar.textContent = '🧑‍🦱';
+                texto.textContent = 'Abrir Guarda-chuva!';
+                extra.textContent = '☂️';
+                btnAtivo.className = 'clima-btn py-3.5 px-3 rounded-2xl border-2 border-sky-500 bg-sky-50 font-extrabold text-slate-900 flex flex-col items-center gap-1 cursor-pointer transition';
+            } else {
+                codeVal.textContent = '"frio"';
+                document.getElementById('line-if-else').classList.add('active-line');
+                cenario.className = 'rounded-2xl p-6 bg-gradient-to-r from-indigo-100 to-slate-100 border-2 border-indigo-300 flex items-center justify-between gap-4 transition-all';
+                avatar.textContent = '🥶';
+                texto.textContent = 'Vestir Casaco Quente!';
+                extra.textContent = '🧥';
+                btnAtivo.className = 'clima-btn py-3.5 px-3 rounded-2xl border-2 border-indigo-500 bg-indigo-50 font-extrabold text-slate-900 flex flex-col items-center gap-1 cursor-pointer transition';
+            }
+        }
+
+        /* -----------------------------------------------------------
+           5. SIMULADOR 2: LOOP (FOR)
+        ----------------------------------------------------------- */
+        let loopTimer = null;
+
+        function atualizarSliderLoop(valor) {
+            document.getElementById('loop-count-badge').textContent = valor + 'x';
+            document.getElementById('code-loop-total').textContent = valor;
+        }
+
+        function executarLoopVisual() {
+            if (loopTimer) clearInterval(loopTimer);
+
+            const total = parseInt(document.getElementById('loop-range').value, 10);
+            const container = document.getElementById('esteira-itens');
+            const status = document.getElementById('loop-status-label');
+            const counterCode = document.getElementById('code-loop-counter');
+            const btnRun = document.getElementById('btn-run-loop');
+
+            container.innerHTML = '';
+            status.textContent = 'Rodando...';
+            btnRun.disabled = true;
+            btnRun.classList.add('opacity-70');
+
+            let i = 0;
+            loopTimer = setInterval(() => {
+                if (i >= total) {
+                    clearInterval(loopTimer);
+                    loopTimer = null;
+                    status.textContent = 'Concluído (' + total + ' itens)';
+                    btnRun.disabled = false;
+                    btnRun.classList.remove('opacity-70');
+                    return;
+                }
+
+                counterCode.textContent = 'Contador i = ' + i;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'item-spawn bg-white border-2 border-emerald-400 rounded-xl px-3 py-2 text-center shadow-sm';
+                itemEl.innerHTML = `<div class="text-2xl">🚀</div><div class="font-code text-[11px] font-extrabold text-emerald-800">i=${i}</div>`;
+                container.appendChild(itemEl);
+
+                i++;
+            }, 380);
+        }
+
+        /* -----------------------------------------------------------
+           6. SIMULADOR 3: ARRAY [ ] (ARMÁRIO NUMERADO)
+        ----------------------------------------------------------- */
+        const mochilaItens = ['🤟', '💻', '🚀', '⚡'];
+        let gavetaSelecionada = 0;
+
+        function selecionarGaveta(indice) {
+            gavetaSelecionada = indice;
+            document.getElementById('label-gaveta-ativa').textContent = '[' + indice + ']';
+            document.getElementById('code-array-index').textContent = indice;
+            document.getElementById('code-array-result').textContent = mochilaItens[indice];
+
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById('gaveta-' + i);
+                if (i === indice) {
+                    btn.className = 'gaveta-btn p-3 rounded-2xl border-2 border-cyan-500 bg-cyan-50 flex flex-col items-center gap-1 cursor-pointer transition shadow-sm';
+                } else {
+                    btn.className = 'gaveta-btn p-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center gap-1 cursor-pointer transition';
+                }
+            }
+        }
+
+        function trocarItemGaveta(novoEmoji) {
+            mochilaItens[gavetaSelecionada] = novoEmoji;
+            document.getElementById('gaveta-item-' + gavetaSelecionada).textContent = novoEmoji;
+            document.getElementById('code-array-result').textContent = novoEmoji;
+            document.getElementById('code-array-list').textContent =
+                '["' + mochilaItens.join('", "') + '"]';
+        }
+
+        /* -----------------------------------------------------------
+           7. DESAFIO RELÂMPAGO (QUIZ VISUAL GAMIFICADO)
+        ----------------------------------------------------------- */
+        const perguntasQuiz = [
+            {
+                pergunta: 'Qual é a língua de sinais usada pela comunidade surda no Brasil?',
+                codigo: null,
+                opcoes: [
+                    { texto: 'ASL (Americana)', correta: false },
+                    { texto: '🤟 Libras', correta: true },
+                    { texto: 'LSF (Francesa)', correta: false }
+                ],
+                explicacao: 'Isso! Libras é a Língua Brasileira de Sinais.'
+            },
+            {
+                pergunta: 'Qual palavra em inglês usamos no código para tomar uma DECISÃO (Se)?',
+                codigo: '___ (sinal === "correto") {\n  ganharPonto();\n}',
+                opcoes: [
+                    { texto: 'if', correta: true },
+                    { texto: 'bug', correta: false },
+                    { texto: 'array', correta: false }
+                ],
+                explicacao: 'Perfeito! "if" significa "Se" — cria uma escolha no código.'
+            },
+            {
+                pergunta: 'No armário abaixo, qual item está na gaveta lista[0]?',
+                codigo: 'const lista = ["🤟", "💻", "🚀"];\n// Qual é lista[0] ?',
+                opcoes: [
+                    { texto: '💻 (Segundo)', correta: false },
+                    { texto: '🚀 (Terceiro)', correta: false },
+                    { texto: '🤟 (Primeiro)', correta: true }
+                ],
+                explicacao: 'Boa! Na programação, a contagem das gavetas começa no zero [0].'
+            },
+            {
+                pergunta: 'Qual comando repete uma ação várias vezes como uma esteira?',
+                codigo: '___ (let i = 0; i < 5; i++) {\n  enviarSinal();\n}',
+                opcoes: [
+                    { texto: 'const', correta: false },
+                    { texto: 'for (Loop)', correta: true },
+                    { texto: 'else', correta: false }
+                ],
+                explicacao: 'Exato! O loop "for" repete a tarefa automaticamente.'
+            },
+            {
+                pergunta: 'Apareceu um erro que travou o programa. Como chamamos esse "inseto"?',
+                codigo: '// Ops! Algo quebrou no código 🐛',
+                opcoes: [
+                    { texto: '🐛 Bug', correta: true },
+                    { texto: '📦 Variável', correta: false },
+                    { texto: '⚙️ Function', correta: false }
+                ],
+                explicacao: 'Mandou bem! "Bug" é um erro no código, e consertar se chama "debug".'
+            }
+        ];
+
+        let indicePerguntaAtual = 0;
+        let pontuacaoQuiz = 0;
+        let questaoRespondida = false;
+
+        function renderizarPerguntaQuiz() {
+            const q = perguntasQuiz[indicePerguntaAtual];
+            questaoRespondida = false;
+
+            document.getElementById('quiz-step-label').textContent =
+                `Pergunta ${indicePerguntaAtual + 1} de ${perguntasQuiz.length}`;
+            document.getElementById('quiz-score-badge').textContent =
+                `Pontos: ${pontuacaoQuiz}`;
+            document.getElementById('quiz-progress-bar').style.width =
+                `${((indicePerguntaAtual + 1) / perguntasQuiz.length) * 100}%`;
+
+            document.getElementById('quiz-question').textContent = q.pergunta;
+
+            const codeBox = document.getElementById('quiz-code-snippet');
+            if (q.codigo) {
+                codeBox.textContent = q.codigo;
+                codeBox.classList.remove('hidden');
+            } else {
+                codeBox.classList.add('hidden');
+            }
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            q.opcoes.forEach((op, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'quiz-opt-btn py-4 px-4 rounded-2xl border-2 border-blue-200 bg-blue-50/40 hover:bg-blue-100/70 hover:border-[#2563a6] text-slate-900 font-extrabold text-base cursor-pointer transition text-center';
+                btn.textContent = op.texto;
+                btn.onclick = () => verificarRespostaQuiz(op.correta, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-feedback').classList.add('hidden');
+        }
+
+        function verificarRespostaQuiz(correta, botaoClicado) {
+            if (questaoRespondida) return;
+            questaoRespondida = true;
+
+            const q = perguntasQuiz[indicePerguntaAtual];
+            const todosBotoes = document.querySelectorAll('.quiz-opt-btn');
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const feedbackIcon = document.getElementById('quiz-feedback-icon');
+            const feedbackText = document.getElementById('quiz-feedback-text');
+            const nextBtn = document.getElementById('quiz-next-btn');
+
+            todosBotoes.forEach(b => {
+                b.disabled = true;
+                b.classList.add('cursor-default');
+            });
+
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-400', 'text-emerald-900', 'bg-rose-50', 'border-rose-400', 'text-rose-900');
+
+            if (correta) {
+                pontuacaoQuiz++;
+                document.getElementById('quiz-score-badge').textContent = `Pontos: ${pontuacaoQuiz}`;
+                botaoClicado.classList.remove('border-blue-200', 'bg-blue-50/40');
+                botaoClicado.classList.add('border-emerald-500', 'bg-emerald-100', 'text-emerald-950');
+
+                feedbackBox.classList.add('bg-emerald-50', 'border-emerald-400', 'text-emerald-900');
+                feedbackIcon.textContent = '✅';
+                feedbackText.textContent = q.explicacao;
+            } else {
+                botaoClicado.classList.remove('border-blue-200', 'bg-blue-50/40');
+                botaoClicado.classList.add('border-rose-500', 'bg-rose-100', 'text-rose-950');
+
+                feedbackBox.classList.add('bg-rose-50', 'border-rose-400', 'text-rose-900');
+                feedbackIcon.textContent = '💡';
+                feedbackText.textContent = 'Quase! ' + q.explicacao;
+            }
+
+            nextBtn.textContent =
+                indicePerguntaAtual === perguntasQuiz.length - 1 ? 'Ver Resultado 🏆' : 'Próxima →';
+        }
+
+        function proximaPergunta() {
+            indicePerguntaAtual++;
+            if (indicePerguntaAtual < perguntasQuiz.length) {
+                renderizarPerguntaQuiz();
+            } else {
+                mostrarResultadoQuiz();
+            }
+        }
+
+        function mostrarResultadoQuiz() {
+            document.getElementById('quiz-active-view').classList.add('hidden');
+            const resultView = document.getElementById('quiz-result-view');
+            resultView.classList.remove('hidden');
+
+            const total = perguntasQuiz.length;
+            const emojiEl = document.getElementById('quiz-final-emoji');
+            const titleEl = document.getElementById('quiz-final-title');
+            const summaryEl = document.getElementById('quiz-final-summary');
+
+            if (pontuacaoQuiz === total) {
+                emojiEl.textContent = '🏆';
+                titleEl.textContent = 'Perfeito! Você dominou o Código Visual!';
+            } else if (pontuacaoQuiz >= 3) {
+                emojiEl.textContent = '🤟';
+                titleEl.textContent = 'Muito bem! Ótimo raciocínio lógico!';
+            } else {
+                emojiEl.textContent = '🚀';
+                titleEl.textContent = 'Bom começo! Teste o Laboratório e tente de novo!';
+            }
+
+            summaryEl.textContent = `Você acertou ${pontuacaoQuiz} de ${total} desafios.`;
+        }
+
+        function reiniciarQuiz() {
+            indicePerguntaAtual = 0;
+            pontuacaoQuiz = 0;
+            document.getElementById('quiz-result-view').classList.add('hidden');
+            document.getElementById('quiz-active-view').classList.remove('hidden');
+            renderizarPerguntaQuiz();
+        }
+
+        // Inicializa o desafio visual ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            renderizarPerguntaQuiz();
+        });
+    </script>
+</body>
+</html>
